@@ -1,0 +1,269 @@
+(function () {
+    const PAGE = {
+        width: 595.32,
+        height: 841.92,
+        officeOffset: 222.77,
+        studentFields: {
+            className: { x: 138.09, y: 369.1, width: 32 },
+            studentId: { x: 206.36, y: 369.1, width: 52 },
+            studentName: { x: 305.94, y: 369.1, width: 114 },
+            englishName: { x: 462.27, y: 369.1, width: 126 },
+        },
+        reasonMarks: {
+            "Personal Leave": { x: 145.53, y: 399.12 },
+            "Mental Health Leave": { x: 296.34, y: 398.52 },
+            "Sick Leave": { x: 145.53, y: 416.04 },
+            "Funeral Leave": { x: 296.94, y: 416.16 },
+        },
+        timeFields: {
+            month: 176.68,
+            day: 225.38,
+            hour: 309.09,
+            minute: 359.94,
+            fromY: 438.4,
+            toY: 458.45,
+        },
+        periods: { x: 479.1, y: 475.3, width: 24 },
+        note: {
+            x: 76,
+            y: 210,
+            maxWidth: 444,
+            lineHeight: 18,
+            maxUnits: 56,
+            maxLines: 22,
+        },
+    };
+
+    function esc(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function formatNumber(value) {
+        if (value === undefined || value === null || value === "") return "";
+        return String(value);
+    }
+
+    function estimateTextWidth(text, size) {
+        let width = 0;
+        for (const ch of String(text || "")) {
+            if (/[\u1100-\u11ff\u2e80-\u9fff\uf900-\ufaff]/.test(ch)) width += size * 0.98;
+            else if (/[A-Z0-9]/.test(ch)) width += size * 0.66;
+            else if (/[a-z]/.test(ch)) width += size * 0.54;
+            else if (ch === " ") width += size * 0.28;
+            else width += size * 0.4;
+        }
+        return width;
+    }
+
+    function textLengthAttr(text, width, size) {
+        if (!width || estimateTextWidth(text, size) <= width) return "";
+        return ' textLength="' + width + '" lengthAdjust="spacingAndGlyphs"';
+    }
+
+    function svgText(text, x, y, opts) {
+        if (!text) return "";
+        const options = opts || {};
+        const anchor = options.anchor || "middle";
+        const size = options.size || 11;
+        const width = options.width || 0;
+        const weight = options.weight || "600";
+        const italic = Boolean(options.italic);
+        const cls = options.cls || "leave-overlay-text";
+
+        return '<text class="' + cls + '" x="' + x + '" y="' + y + '" text-anchor="' + anchor +
+            '" font-size="' + size + '" font-weight="' + weight + '"' +
+            (italic ? ' font-style="italic"' : "") +
+            textLengthAttr(text, width, size) + ">" + esc(text) + "</text>";
+    }
+
+    function svgCheck(x, y) {
+        return '<path d="M ' + (x - 4.2) + " " + (y + 0.8) + " L " + (x - 1.2) + " " + (y + 4.1) +
+            " L " + (x + 5.6) + " " + (y - 4.8) +
+            '" fill="none" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>';
+    }
+
+    function visualUnits(ch) {
+        return /[\u1100-\u11ff\u2e80-\u9fff\uf900-\ufaff]/.test(ch) ? 2 : 1;
+    }
+
+    function wrapText(text, maxUnits) {
+        const lines = [];
+        let current = "";
+        let units = 0;
+
+        for (const ch of text) {
+            if (ch === "\n") {
+                if (current.trim()) lines.push(current.trim());
+                current = "";
+                units = 0;
+                continue;
+            }
+
+            const add = visualUnits(ch);
+            if (units + add > maxUnits && current.trim()) {
+                lines.push(current.trim());
+                current = ch;
+                units = add;
+                continue;
+            }
+
+            current += ch;
+            units += add;
+        }
+
+        if (current.trim()) lines.push(current.trim());
+        return lines;
+    }
+
+    function buildNoteLines(reason) {
+        const text = String(reason || "").trim();
+        if (!text) return [];
+
+        const parts = text.split(/\r?\n+/).map(s => s.trim()).filter(Boolean);
+        const lines = [];
+
+        parts.forEach((part, index) => {
+            wrapText(part, PAGE.note.maxUnits).forEach(line => lines.push(line));
+            if (index < parts.length - 1) lines.push("");
+        });
+
+        return lines.slice(0, PAGE.note.maxLines);
+    }
+
+    function renderCopy(record, startDate, endDate, offsetY) {
+        const studentId = record.studentId || record.seatNo || "";
+        const fields = PAGE.studentFields;
+        const time = PAGE.timeFields;
+        const parts = [];
+
+        parts.push(svgText(record.className || "", fields.className.x, fields.className.y + offsetY, {
+            size: 10.8,
+            width: fields.className.width,
+        }));
+        parts.push(svgText(studentId, fields.studentId.x, fields.studentId.y + offsetY, {
+            size: 10.8,
+            width: fields.studentId.width,
+        }));
+        parts.push(svgText(record.studentName || "", fields.studentName.x, fields.studentName.y + offsetY, {
+            size: 11.2,
+            width: fields.studentName.width,
+        }));
+        parts.push(svgText(record.englishName || "", fields.englishName.x, fields.englishName.y + offsetY, {
+            size: 10.6,
+            width: fields.englishName.width,
+        }));
+
+        Object.entries(PAGE.reasonMarks).forEach(([type, pos]) => {
+            if (record.leaveType === type) {
+                parts.push(svgCheck(pos.x, pos.y + offsetY));
+            }
+        });
+
+        parts.push(svgText(formatNumber(startDate.getMonth() + 1), time.month, time.fromY + offsetY, { size: 11, width: 20 }));
+        parts.push(svgText(formatNumber(startDate.getDate()), time.day, time.fromY + offsetY, { size: 11, width: 20 }));
+        parts.push(svgText(formatNumber(String(startDate.getHours()).padStart(2, "0")), time.hour, time.fromY + offsetY, { size: 11, width: 22 }));
+        parts.push(svgText(formatNumber(String(startDate.getMinutes()).padStart(2, "0")), time.minute, time.fromY + offsetY, { size: 11, width: 24 }));
+
+        parts.push(svgText(formatNumber(endDate.getMonth() + 1), time.month, time.toY + offsetY, { size: 11, width: 20 }));
+        parts.push(svgText(formatNumber(endDate.getDate()), time.day, time.toY + offsetY, { size: 11, width: 20 }));
+        parts.push(svgText(formatNumber(String(endDate.getHours()).padStart(2, "0")), time.hour, time.toY + offsetY, { size: 11, width: 22 }));
+        parts.push(svgText(formatNumber(String(endDate.getMinutes()).padStart(2, "0")), time.minute, time.toY + offsetY, { size: 11, width: 24 }));
+
+        parts.push(svgText(formatNumber(record.periods || 1), PAGE.periods.x, PAGE.periods.y + offsetY, {
+            size: 12.5,
+            width: PAGE.periods.width,
+            weight: "700",
+        }));
+
+        return parts.join("");
+    }
+
+    function renderNotes(record) {
+        const lines = buildNoteLines(record.reason);
+        if (!lines.length) return "";
+
+        return lines.map((line, index) => {
+            if (!line) return "";
+            return svgText(line, PAGE.note.x, PAGE.note.y + index * PAGE.note.lineHeight, {
+                anchor: "start",
+                size: 13.6,
+                width: PAGE.note.maxWidth,
+                weight: "500",
+                cls: "leave-overlay-note",
+            });
+        }).join("");
+    }
+
+    function recordError(record) {
+        if (!record) return "Leave record not found. It may have been deleted.";
+        if (!record.startTime || !record.endTime) return "This leave record is missing its time range.";
+
+        const startDate = new Date(record.startTime);
+        const endDate = new Date(record.endTime);
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+            return "This leave record contains an invalid time range.";
+        }
+
+        return "";
+    }
+
+    function buildMarkup(record) {
+        const startDate = new Date(record.startTime);
+        const endDate = new Date(record.endTime);
+
+        return '<div class="leave-sheet-stack">' +
+            '<div class="leave-sheet">' +
+                '<img class="leave-sheet-bg" src="assets/leave-template-1.png" alt="Leave form template page 1">' +
+                '<svg class="leave-sheet-svg" viewBox="0 0 ' + PAGE.width + " " + PAGE.height + '" aria-hidden="true" preserveAspectRatio="none">' +
+                    renderCopy(record, startDate, endDate, 0) +
+                    renderCopy(record, startDate, endDate, PAGE.officeOffset) +
+                "</svg>" +
+            "</div>" +
+            '<div class="leave-sheet">' +
+                '<img class="leave-sheet-bg" src="assets/leave-template-2.png" alt="Leave form template page 2">' +
+                '<svg class="leave-sheet-svg" viewBox="0 0 ' + PAGE.width + " " + PAGE.height + '" aria-hidden="true" preserveAspectRatio="none">' +
+                    renderNotes(record) +
+                "</svg>" +
+            "</div>" +
+        "</div>";
+    }
+
+    function buildEmptyMarkup(message, options) {
+        const opts = options || {};
+        const href = opts.emptyHref || "";
+        const linkLabel = opts.emptyLinkLabel || "Back";
+        const link = href
+            ? '<p class="leave-empty-link"><a href="' + esc(href) + '">' + esc(linkLabel) + "</a></p>"
+            : "";
+
+        return '<div class="leave-empty">' +
+            "<h2>&#x26A0;&#xFE0F; Cannot Load Form</h2>" +
+            "<p>" + esc(message) + "</p>" +
+            link +
+        "</div>";
+    }
+
+    function renderInto(container, record, options) {
+        if (!container) return false;
+        const error = recordError(record);
+        container.innerHTML = error ? buildEmptyMarkup(error, options) : buildMarkup(record);
+        return !error;
+    }
+
+    function titleFor(record) {
+        return "Leave Form - " + (record?.studentName || record?.studentId || "Student");
+    }
+
+    window.LeaveFormRenderer = {
+        page: PAGE,
+        recordError,
+        buildMarkup,
+        buildEmptyMarkup,
+        renderInto,
+        titleFor,
+    };
+})();

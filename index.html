@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBSH Student Leave & Tardy System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared-db.js"></script>
+    <script src="leave-form-renderer.js"></script>
+    <style>
+:root {
+    --primary: #10B981;
+    --primary-dark: #059669;
+    --primary-light: #D1FAE5;
+    --accent: #6366F1;
+    --accent-light: #E0E7FF;
+    --surface: #FFFFFF;
+    --surface-2: #F8FAFC;
+    --bg: #F1F5F9;
+    --text: #0F172A;
+    --text-2: #64748B;
+    --text-3: #94A3B8;
+    --border: #E2E8F0;
+    --danger: #EF4444;
+    --danger-light: #FEE2E2;
+    --warning: #F59E0B;
+    --warning-light: #FEF3C7;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+    --shadow-glow: 0 0 40px rgba(16,185,129,0.15);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); min-height:100vh;
+    overflow-x: hidden;
+}
+.bg-pattern {
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.4;
+    background: radial-gradient(circle at 20% 20%, rgba(16,185,129,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99,102,241,0.08) 0%, transparent 50%);
+}
+.sidebar {
+    position: fixed; left:0; top:0; bottom:0; width:72px; background: var(--text);
+    display:flex; flex-direction:column; align-items:center; padding:16px 0; z-index:100;
+    transition: width 0.3s;
+}
+.sidebar-logo {
+    width:44px; height:44px; background: var(--primary); border-radius:14px;
+    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+    font-weight:900; color:white; margin-bottom:24px; letter-spacing:-1px;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+}
+.sidebar-nav { display:flex; flex-direction:column; gap:4px; width:100%; padding:0 10px; flex:1; }
+.sidebar-btn {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; padding:12px 4px; border:none; background:transparent; color:#94A3B8;
+    border-radius:12px; cursor:pointer; transition:var(--transition); font-size:0.6rem;
+    font-weight:500; letter-spacing:0.3px; white-space:nowrap; font-family:inherit;
+}
+.sidebar-btn .s-icon { font-size:1.4rem; transition:var(--transition); }
+.sidebar-btn:hover { color:white; background:rgba(255,255,255,0.08); }
+.sidebar-btn.active { color:var(--primary); background:rgba(16,185,129,0.12); }
+.sidebar-btn.active .s-icon { transform:scale(1.15); }
+.sidebar-bottom { margin-top:auto; padding:10px; }
+.content { margin-left:72px; padding:0; min-height:100vh; position:relative; z-index:1; }
+.topbar {
+    position:sticky; top:0; z-index:50; background:rgba(241,245,249,0.85);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border); padding:16px 32px;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.topbar-title { font-size:1.5rem; font-weight:800; color:var(--text); }
+.topbar-sub { font-size:0.8rem; color:var(--text-3); font-weight:500; margin-top:2px; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.topbar-date {
+    font-size:0.85rem; color:var(--text-2); font-weight:500;
+    background:var(--surface); padding:8px 16px; border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+}
+.sync-pill-local { color:#64748B; }
+.sync-pill-remote {
+    color:#065F46;
+    background:#D1FAE5;
+    border-color:#A7F3D0;
+}
+.sync-pill-error {
+    color:#991B1B;
+    background:#FEE2E2;
+    border-color:#FECACA;
+}
+.main { max-width:1000px; margin:0 auto; padding:24px 32px 60px; }
+.page { display:none; animation: fadeSlide 0.4s ease; }
+.page.active { display:block; }
+@keyframes fadeSlide {
+    from { opacity:0; transform:translateY(12px); }
+    to { opacity:1; transform:translateY(0); }
+}
+.card {
+    background:var(--surface); border-radius:var(--radius); border:1px solid var(--border);
+    padding:28px; margin-bottom:20px; transition:var(--transition);
+}
+.card:hover { box-shadow:var(--shadow-md); }
+.card-hero {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color:white; border:none; position:relative; overflow:hidden;
+}
+.card-hero::after {
+    content:''; position:absolute; right:-30px; top:-30px; width:160px; height:160px;
+    background:rgba(255,255,255,0.1); border-radius:50%;
+}
+.card-hero::before {
+    content:''; position:absolute; right:40px; bottom:-40px; width:120px; height:120px;
+    background:rgba(255,255,255,0.06); border-radius:50%;
+}
+.card-title {
+    font-size:1rem; font-weight:700; margin-bottom:20px; display:flex;
+    align-items:center; gap:10px; color:var(--text);
+}
+.card-title .ct-icon {
+    width:36px; height:36px; border-radius:10px; display:flex; align-items:center;
+    justify-content:center; font-size:1.1rem;
+}
+.ct-green { background:var(--primary-light); }
+.ct-purple { background:var(--accent-light); }
+.ct-red { background:var(--danger-light); }
+.ct-yellow { background:var(--warning-light); }
+.form-group { margin-bottom:18px; }
+.form-label {
+    display:block; font-weight:600; margin-bottom:6px; font-size:0.82rem;
+    color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px;
+}
+.form-control {
+    width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:var(--radius-sm);
+    font-size:0.95rem; transition:var(--transition); background:var(--surface-2);
+    font-family:inherit; color:var(--text);
+}
+.form-control:focus { outline:none; border-color:var(--primary); background:white; box-shadow:0 0 0 4px rgba(16,185,129,0.1); }
+textarea.form-control { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.radio-group { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.radio-card {
+    position:relative; padding:14px 16px; border:2px solid var(--border);
+    border-radius:var(--radius-sm); cursor:pointer; transition:var(--transition);
+    background:var(--surface-2);
+}
+.radio-card:hover { border-color:var(--primary); background:white; }
+.radio-card.selected { border-color:var(--primary); background:var(--primary-light); }
+.radio-card input { position:absolute; opacity:0; }
+.radio-card .rc-label { font-weight:600; font-size:0.9rem; color:var(--text); }
+.radio-card .rc-sub { font-size:0.75rem; color:var(--text-2); margin-top:2px; }
+.radio-card .rc-check {
+    position:absolute; top:10px; right:10px; width:20px; height:20px;
+    border-radius:50%; border:2px solid var(--border); transition:var(--transition);
+    display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:white;
+}
+.radio-card.selected .rc-check { background:var(--primary); border-color:var(--primary); }
+.btn {
+    padding:12px 24px; border:none; border-radius:var(--radius-sm); font-size:0.9rem;
+    font-weight:600; cursor:pointer; transition:var(--transition);
+    display:inline-flex; align-items:center; gap:8px; font-family:inherit;
+    position:relative; overflow:hidden;
+}
+.btn::after {
+    content:''; position:absolute; inset:0; background:linear-gradient(rgba(255,255,255,0.2),transparent);
+    opacity:0; transition:opacity 0.2s;
+}
+.btn:hover::after { opacity:1; }
+.btn-primary { background:var(--primary); color:white; box-shadow:0 4px 12px rgba(16,185,129,0.3); }
+.btn-primary:hover { background:var(--primary-dark); transform:translateY(-2px); box-shadow:0 6px 20px rgba(16,185,129,0.4); }
+.btn-accent { background:var(--accent); color:white; box-shadow:0 4px 12px rgba(99,102,241,0.3); }
+.btn-accent:hover { background:#4F46E5; transform:translateY(-2px); }
+.btn-ghost {
+    background:transparent; color:var(--text-2); border:2px solid var(--border);
+}
+.btn-ghost:hover { border-color:var(--text); color:var(--text); background:var(--surface-2); }
+.btn-block { width:100%; justify-content:center; padding:16px; font-size:1rem; }
+.btn-sm { padding:6px 14px; font-size:0.8rem; border-radius:8px; }
+.toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.toast {
+    padding:14px 20px; border-radius:var(--radius-sm); color:white; font-weight:600;
+    font-size:0.9rem; transform:translateX(120%); transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:10px; max-width:360px;
+    font-family:inherit;
+}
+.toast.show { transform:translateX(0); }
+.toast.success { background:#059669; }
+.toast.error { background:#DC2626; }
+.toast.info { background:#6366F1; }
+.toast .toast-close { cursor:pointer; opacity:0.7; margin-left:auto; font-size:1.1rem; }
+.toast .toast-close:hover { opacity:1; }
+.modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+    backdrop-filter:blur(8px); z-index:200; justify-content:center; align-items:center;
+    padding:20px;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+    background:white; border-radius:var(--radius); padding:32px;
+    max-width:720px; width:100%; max-height:90vh; overflow-y:auto;
+    box-shadow:var(--shadow-lg); animation: modalIn 0.3s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(10px); } }
+.modal h2 { font-size:1.2rem; font-weight:800; margin-bottom:8px; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+.success-anim {
+    display:flex; flex-direction:column; align-items:center; padding:40px 0;
+    animation: popIn 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes popIn { from { transform:scale(0.7); opacity:0; } 50% { transform:scale(1.05); } }
+.success-check {
+    width:80px; height:80px; background:var(--primary); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:2.5rem;
+    color:white; margin-bottom:16px; box-shadow:0 8px 24px rgba(16,185,129,0.3);
+}
+.success-text { font-size:1.2rem; font-weight:700; color:var(--text); }
+.success-sub { font-size:0.9rem; color:var(--text-2); margin-top:4px; }
+.period-hint { margin-top:8px; font-size:0.82rem; color:var(--text-2); }
+.sidebar-link {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; padding:12px 4px; background:transparent; color:#94A3B8;
+    border-radius:12px; cursor:pointer; transition:var(--transition); font-size:0.6rem;
+    font-weight:500; letter-spacing:0.3px; white-space:nowrap; font-family:inherit;
+    text-decoration:none; border:none;
+}
+.sidebar-link .s-icon { font-size:1.4rem; transition:var(--transition); }
+.sidebar-link:hover { color:white; background:rgba(255,255,255,0.08); }
+.leave-preview-note {
+    margin: -6px 0 18px;
+    color: var(--text-2);
+    font-size: 0.92rem;
+    line-height: 1.65;
+}
+.leave-preview-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.leave-preview-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.leave-preview-meta-item {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+}
+.leave-preview-meta-item strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.leave-preview-meta-item span {
+    display: block;
+    color: var(--text);
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.leave-preview-shell {
+    padding: 18px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+    border: 1px solid #dbeafe;
+}
+.leave-sheet-stack {
+    display: grid;
+    gap: 18px;
+}
+.leave-sheet {
+    position: relative;
+    width: min(100%, 210mm);
+    aspect-ratio: 595.32 / 841.92;
+    margin: 0 auto;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+    overflow: hidden;
+}
+.leave-sheet-bg,
+.leave-sheet-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.leave-sheet-bg {
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.leave-overlay-text,
+.leave-overlay-note {
+    fill: #111827;
+    font-family: "Times New Roman", "Noto Serif TC", serif;
+}
+.leave-empty {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+.leave-empty h2 {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+}
+.leave-empty p {
+    margin: 0;
+    color: var(--text-2);
+    line-height: 1.65;
+}
+.leave-empty-link {
+    margin-top: 16px !important;
+}
+.leave-empty a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 700;
+}
+@page {
+    size: A4;
+    margin: 0;
+}
+@media print {
+    body.printing-leave-preview {
+        background: #ffffff;
+    }
+    body.printing-leave-preview .bg-pattern,
+    body.printing-leave-preview .sidebar,
+    body.printing-leave-preview .topbar,
+    body.printing-leave-preview #page-late,
+    body.printing-leave-preview #leaveFormCard,
+    body.printing-leave-preview #leaveSuccessCard {
+        display: none !important;
+    }
+    body.printing-leave-preview .content {
+        margin-left: 0;
+    }
+    body.printing-leave-preview .main {
+        max-width: none;
+        padding: 0;
+    }
+    body.printing-leave-preview #page-leave {
+        display: block !important;
+    }
+    body.printing-leave-preview #leavePreviewCard {
+        display: block !important;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+    body.printing-leave-preview #leavePreviewCard .card-title,
+    body.printing-leave-preview #leavePreviewCard .leave-preview-note,
+    body.printing-leave-preview #leavePreviewCard .leave-preview-actions,
+    body.printing-leave-preview #leavePreviewCard .leave-preview-meta {
+        display: none !important;
+    }
+    body.printing-leave-preview #leavePreviewCard .leave-preview-shell {
+        padding: 0;
+        border: none;
+        background: transparent;
+    }
+    body.printing-leave-preview #leavePreviewCard .leave-sheet {
+        width: 210mm;
+        margin: 0;
+        box-shadow: none;
+        break-after: page;
+    }
+    body.printing-leave-preview #leavePreviewCard .leave-sheet:last-child {
+        break-after: auto;
+    }
+}
+@media (max-width:768px) {
+    .sidebar { width:100%; height:60px; flex-direction:row; bottom:0; top:auto; padding:0 8px; }
+    .sidebar-logo { display:none; }
+    .sidebar-nav { flex-direction:row; gap:0; padding:0; }
+    .sidebar-btn { padding:8px 2px; font-size:0.55rem; }
+    .sidebar-btn .s-icon { font-size:1.2rem; }
+    .sidebar-bottom { display:none; }
+    .content { margin-left:0; margin-bottom:60px; }
+    .topbar { padding:14px 16px; }
+    .main { padding:16px; }
+    .form-row { grid-template-columns:1fr; }
+    .radio-group { grid-template-columns:1fr; }
+    .sidebar-link { padding:8px 2px; font-size:0.55rem; }
+    .sidebar-link .s-icon { font-size:1.2rem; }
+    .leave-preview-meta { grid-template-columns:1fr; }
+    .leave-preview-actions { flex-direction:column; }
+    .leave-preview-shell { padding:10px; }
+}
+    </style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-logo">IB</div>
+    <nav class="sidebar-nav">
+        <button class="sidebar-btn active" data-page="late" onclick="switchPage('late')">
+            <span class="s-icon">&#x23F0;</span>Late
+        </button>
+        <button class="sidebar-btn" data-page="leave" onclick="switchPage('leave')">
+            <span class="s-icon">&#x1F4CB;</span>Leave
+        </button>
+    </nav>
+</aside>
+
+<!-- Content -->
+<div class="content">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title" id="pageTitle">Late Check-in</div>
+            <div class="topbar-sub">IBSH Bilingual Program &mdash; Leave and Tardy Management System</div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date sync-pill-local" id="syncStatus">Storage: Local</div>
+            <div class="topbar-date" id="dateDisplay"></div>
+        </div>
+    </div>
+
+    <div class="main">
+
+<!-- ====== Late Check-in ====== -->
+<div class="page active" id="page-late">
+    <div class="card card-hero" style="margin-bottom:24px;">
+        <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:4px; position:relative; z-index:1;">&#x23F0; Late Check-in</h2>
+        <p style="opacity:0.85; font-size:0.9rem; position:relative; z-index:1;">Select the class and student, then record the late reason.</p>
+    </div>
+    <div class="card" id="lateFormCard">
+        <div class="card-title"><span class="ct-icon ct-green">&#x1F4CD;</span>Late Record Details</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Class</label>
+                <select class="form-control" id="lateClass" onchange="loadStudents('late')">
+                    <option value="">Select a class</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Student</label>
+                <select class="form-control" id="lateStudent">
+                    <option value="">Choose a class first</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Late Reason</label>
+            <textarea class="form-control" id="lateReason" placeholder="Enter the late reason..." rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="submitLate()">Submit Late Record</button>
+    </div>
+    <div class="card" id="lateSuccessCard" style="display:none;"></div>
+</div>
+
+<!-- ====== Leave Application ====== -->
+<div class="page" id="page-leave">
+    <div class="card card-hero" style="background:linear-gradient(135deg,#6366F1,#4F46E5); margin-bottom:24px;">
+        <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:4px; position:relative; z-index:1;">&#x1F4CB; Leave Application</h2>
+        <p style="opacity:0.85; font-size:0.9rem; position:relative; z-index:1;">Create a leave record, auto-calculate periods, and generate the school leave form.</p>
+    </div>
+    <div class="card" id="leaveFormCard">
+        <div class="card-title"><span class="ct-icon ct-purple">&#x270D;&#xFE0F;</span>Leave Details</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Class</label>
+                <select class="form-control" id="leaveClass" onchange="loadStudents('leave')">
+                    <option value="">Select a class</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Student</label>
+                <select class="form-control" id="leaveStudent">
+                    <option value="">Choose a class first</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Leave Type</label>
+            <div class="radio-group" id="leaveTypeGroup">
+                <label class="radio-card selected" onclick="selectRadio(this)">
+                    <input type="radio" name="leaveType" value="Personal Leave" checked>
+                    <div class="rc-label">Personal Leave</div>
+                    <div class="rc-sub">Personal Reason</div>
+                    <div class="rc-check">&#x2713;</div>
+                </label>
+                <label class="radio-card" onclick="selectRadio(this)">
+                    <input type="radio" name="leaveType" value="Sick Leave">
+                    <div class="rc-label">Sick Leave</div>
+                    <div class="rc-sub">Health Reason</div>
+                    <div class="rc-check">&#x2713;</div>
+                </label>
+                <label class="radio-card" onclick="selectRadio(this)">
+                    <input type="radio" name="leaveType" value="Mental Health Leave">
+                    <div class="rc-label">Mental Health Leave</div>
+                    <div class="rc-sub">Mental Health Reason (Gr.10-12)</div>
+                    <div class="rc-check">&#x2713;</div>
+                </label>
+                <label class="radio-card" onclick="selectRadio(this)">
+                    <input type="radio" name="leaveType" value="Funeral Leave">
+                    <div class="rc-label">Funeral Leave</div>
+                    <div class="rc-sub">Funeral Reason</div>
+                    <div class="rc-check">&#x2713;</div>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Notes (Optional)</label>
+            <textarea class="form-control" id="leaveReason" placeholder="Add any extra notes if needed..." rows="2"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Start</label>
+                <input type="datetime-local" class="form-control" id="leaveStart">
+            </div>
+            <div class="form-group">
+                <label class="form-label">End</label>
+                <input type="datetime-local" class="form-control" id="leaveEnd">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Total Periods</label>
+            <input type="number" class="form-control" id="leavePeriods" min="1" value="7" style="max-width:160px;" readonly>
+            <div class="period-hint" id="leavePeriodHint">Auto-calculated at 7 periods per day.</div>
+        </div>
+        <button class="btn btn-accent btn-block" onclick="submitLeave()">Submit Leave Application</button>
+    </div>
+    <div class="card" id="leaveSuccessCard" style="display:none;"></div>
+    <div class="card" id="leavePreviewCard" style="display:none;">
+        <div class="card-title"><span class="ct-icon ct-purple">&#x1F5A8;</span>Leave Form Preview</div>
+        <p class="leave-preview-note">The leave form is now part of this same page. Review it here, then print or save it as PDF when ready.</p>
+        <div class="leave-preview-actions">
+            <button class="btn btn-accent" onclick="printLeavePreview()">Print / Save PDF</button>
+            <button class="btn btn-ghost" onclick="openStandaloneLeaveForm()">Open Standalone Page</button>
+            <button class="btn btn-ghost" onclick="hideLeavePreview()">Close Preview</button>
+        </div>
+        <div class="leave-preview-meta" id="leavePreviewMeta"></div>
+        <div class="leave-preview-shell">
+            <div id="leavePreviewMount"></div>
+        </div>
+    </div>
+</div>
+
+    </div><!-- end main -->
+</div><!-- end content -->
+
+
+<script>
+// ==================== Data Store ====================
+const DB = window.AppDB;
+const Renderer = window.LeaveFormRenderer;
+let activeLeavePreviewId = '';
+
+function updateSyncStatus() {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    const status = DB.status();
+    el.className = 'topbar-date';
+    if (status.mode === 'firebase') {
+        el.classList.add('sync-pill-remote');
+        el.textContent = 'Storage: Firebase';
+        return;
+    }
+    if (status.error) {
+        el.classList.add('sync-pill-error');
+        el.textContent = 'Storage: Local Fallback';
+        return;
+    }
+    el.classList.add('sync-pill-local');
+    el.textContent = 'Storage: Local';
+}
+
+// ==================== Init ====================
+function init() {
+    const now = new Date();
+    document.getElementById('dateDisplay').textContent =
+        now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    document.getElementById('leaveStart').value = toLocalISO(now).slice(0,16);
+    document.getElementById('leaveEnd').value = toLocalISO(new Date(now.getTime()+3600000)).slice(0,16);
+    loadClassOptions();
+}
+function toLocalISO(d) { return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString(); }
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+
+// ==================== Pages ====================
+const PAGE_TITLES = { late:'Late Check-in', leave:'Leave Application' };
+function switchPage(page) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    document.querySelector('.sidebar-btn[data-page="'+page+'"]').classList.add('active');
+    document.getElementById('pageTitle').textContent = PAGE_TITLES[page];
+}
+
+// ==================== Class/Student ====================
+function getClasses() {
+    return [...new Set(DB.students().map(s=>s.className))].sort((a,b)=>{
+        const na=parseInt(a),nb=parseInt(b);
+        if(na!==nb) return na-nb;
+        return a.localeCompare(b);
+    });
+}
+function loadClassOptions() {
+    const classes = getClasses();
+    ['lateClass','leaveClass'].forEach(id=>{
+        const el=document.getElementById(id), v=el.value;
+        el.innerHTML='<option value="">-- Select a class --</option>'+classes.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+        el.value=v;
+    });
+}
+function loadStudents(type) {
+    const cls=document.getElementById(type+'Class').value;
+    const sel=document.getElementById(type+'Student');
+    sel.innerHTML='<option value="">-- Select a student --</option>';
+    if(!cls) return;
+    DB.students().filter(s=>s.className===cls).sort((a,b)=>parseInt(a.seatNo)-parseInt(b.seatNo))
+        .forEach(s=>{ sel.innerHTML+='<option value="'+s.studentId+'">'+(s.seatNo?'#'+s.seatNo+' ':'')+s.name+' ('+s.studentId+')</option>'; });
+}
+
+// ==================== Late ====================
+function submitLate() {
+    const cls=document.getElementById('lateClass').value;
+    const sid=document.getElementById('lateStudent').value;
+    const reason=document.getElementById('lateReason').value.trim();
+    if(!cls||!sid) return showToast('Please select a class and student','error');
+    if(!reason) return showToast('Please enter the late reason','error');
+    const student=DB.students().find(s=>s.studentId===sid);
+    const records=DB.late();
+    records.push({
+        id:genId(), timestamp:new Date().toISOString(),
+        className:cls, studentId:sid,
+        studentName:student?.name||'Unknown',
+        englishName:student?.englishName||'',
+        seatNo:student?.seatNo||'', reason
+    });
+    DB.set('late',records);
+    document.getElementById('lateReason').value='';
+    const card=document.getElementById('lateSuccessCard');
+    card.style.display='block';
+    card.innerHTML='<div class="success-anim">'+
+        '<div class="success-check">&#x2713;</div>'+
+        '<div class="success-text">Late record submitted!</div>'+
+        '<div class="success-sub">'+esc(student?.name||sid)+' &mdash; '+esc(cls)+'</div>'+
+        '<button class="btn btn-ghost" style="margin-top:16px;" onclick="resetLateForm()">Continue</button>'+
+    '</div>';
+    document.getElementById('lateFormCard').style.display='none';
+    showToast('Late record submitted!','success');
+}
+function resetLateForm() {
+    document.getElementById('lateFormCard').style.display='block';
+    document.getElementById('lateSuccessCard').style.display='none';
+}
+
+// ==================== Leave ====================
+function selectRadio(el) {
+    el.closest('.radio-group').querySelectorAll('.radio-card').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('input').checked=true;
+}
+function submitLeave() {
+    const cls=document.getElementById('leaveClass').value;
+    const sid=document.getElementById('leaveStudent').value;
+    const leaveType=document.querySelector('input[name="leaveType"]:checked').value;
+    const reason=document.getElementById('leaveReason').value.trim();
+    const start=document.getElementById('leaveStart').value;
+    const end=document.getElementById('leaveEnd').value;
+    const periods=document.getElementById('leavePeriods').value;
+    if(!cls||!sid) return showToast('Please select a class and student','error');
+    if(!start||!end) return showToast('Please select start and end time','error');
+    if(new Date(start)>=new Date(end)) return showToast('End time must be after start time','error');
+    const student=DB.students().find(s=>s.studentId===sid);
+    const record={
+        id:genId(), timestamp:new Date().toISOString(),
+        className:cls, studentId:sid,
+        studentName:student?.name||'Unknown',
+        englishName:student?.englishName||'',
+        seatNo:student?.seatNo||'',
+        leaveType, reason, startTime:start, endTime:end,
+        periods:parseInt(periods)||1, verifyCode:genVerifyCode()
+    };
+    const records=DB.leave();
+    records.push(record);
+    DB.set('leave',records);
+    document.getElementById('leaveReason').value='';
+    const card=document.getElementById('leaveSuccessCard');
+    card.style.display='block';
+    card.innerHTML='<div class="success-anim">'+
+        '<div class="success-check">&#x2713;</div>'+
+        '<div class="success-text">Leave application submitted!</div>'+
+        '<div class="success-sub">'+esc(student?.name||sid)+' &mdash; '+esc(leaveType)+' &mdash; '+fmtRange(start,end)+'</div>'+
+        '<div style="display:flex;gap:10px;margin-top:16px;">'+
+            '<button class="btn btn-accent" onclick="viewDoc(\''+record.id+'\')">Preview / Print Form</button>'+
+            '<button class="btn btn-ghost" onclick="resetLeaveForm()">New Application</button>'+
+        '</div>'+
+    '</div>';
+    document.getElementById('leaveFormCard').style.display='none';
+    viewDoc(record.id);
+    showToast('Leave application submitted!','success');
+}
+function resetLeaveForm() {
+    document.getElementById('leaveFormCard').style.display='block';
+    document.getElementById('leaveSuccessCard').style.display='none';
+    hideLeavePreview();
+}
+
+// ==================== Leave Document ====================
+function viewDoc(id) {
+    const record = DB.leave().find(item => item.id === id);
+    const previewCard = document.getElementById('leavePreviewCard');
+    const previewMount = document.getElementById('leavePreviewMount');
+    if (!record) {
+        showToast('Leave form not found','error');
+        hideLeavePreview();
+        return;
+    }
+
+    const rendered = Renderer.renderInto(previewMount, record, {
+        emptyHref: '#page-leave',
+        emptyLinkLabel: 'Back to leave form',
+    });
+
+    previewCard.style.display = 'block';
+    activeLeavePreviewId = id;
+    updateLeavePreviewMeta(record);
+
+    if (rendered) {
+        previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function updateLeavePreviewMeta(record) {
+    const meta = document.getElementById('leavePreviewMeta');
+    if (!meta || !record) return;
+    meta.innerHTML =
+        '<div class="leave-preview-meta-item">' +
+            '<strong>Student</strong>' +
+            '<span>' + esc(record.studentName || record.studentId || 'Unknown') + '</span>' +
+        '</div>' +
+        '<div class="leave-preview-meta-item">' +
+            '<strong>Leave Type</strong>' +
+            '<span>' + esc(record.leaveType || 'Unspecified') + '</span>' +
+        '</div>' +
+        '<div class="leave-preview-meta-item">' +
+            '<strong>Time</strong>' +
+            '<span>' + esc(fmtRange(record.startTime, record.endTime)) + '</span>' +
+        '</div>';
+}
+
+function hideLeavePreview() {
+    activeLeavePreviewId = '';
+    document.getElementById('leavePreviewCard').style.display = 'none';
+    document.getElementById('leavePreviewMeta').innerHTML = '';
+    document.getElementById('leavePreviewMount').innerHTML = '';
+}
+
+function printLeavePreview() {
+    if (!activeLeavePreviewId) {
+        showToast('Open a leave form preview first','error');
+        return;
+    }
+    document.body.classList.add('printing-leave-preview');
+    window.print();
+}
+
+function openStandaloneLeaveForm() {
+    if (!activeLeavePreviewId) {
+        showToast('Open a leave form preview first','error');
+        return;
+    }
+    window.open('leave-form.html?id=' + encodeURIComponent(activeLeavePreviewId), '_blank');
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// ==================== Utils ====================
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).substr(2,6); }
+function genVerifyCode(){
+    const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s='';
+    for(let i=0;i<12;i++){if(i>0&&i%4===0) s+='-'; s+=c[Math.floor(Math.random()*c.length)];}
+    return s;
+}
+function fmtDT(s){ if(!s) return ''; const d=new Date(s); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function fmtRange(s,e){ return fmtDT(s)+' ~ '+fmtDT(e); }
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function showToast(msg,type='info'){
+    const container=document.getElementById('toastContainer');
+    const t=document.createElement('div');
+    t.className='toast '+type;
+    t.innerHTML='<span>'+msg+'</span><span class="toast-close" onclick="this.parentElement.remove()">&#x2715;</span>';
+    container.appendChild(t);
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>t.classList.add('show')); });
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3500);
+}
+
+window.addEventListener('app-db-status', updateSyncStatus);
+window.addEventListener('afterprint', ()=>document.body.classList.remove('printing-leave-preview'));
+
+async function bootstrap() {
+    updateSyncStatus();
+    await DB.init();
+    init();
+    updateSyncStatus();
+}
+
+bootstrap();
+</script>
+</body>
+</html>
