@@ -211,20 +211,27 @@
         return "";
     }
 
+    function imageTag(primarySrc, fallbackSrc, alt) {
+        return '<img class="leave-sheet-bg" src="' + esc(primarySrc) +
+            '" data-fallback-src="' + esc(fallbackSrc) +
+            '" alt="' + esc(alt) +
+            '" onerror="if(this.dataset.fallbackSrc && this.dataset.fallbackSrc !== this.getAttribute(\'src\')){this.setAttribute(\'src\', this.dataset.fallbackSrc);}">';
+    }
+
     function buildMarkup(record) {
         const startDate = new Date(record.startTime);
         const endDate = new Date(record.endTime);
 
         return '<div class="leave-sheet-stack">' +
             '<div class="leave-sheet">' +
-                '<img class="leave-sheet-bg" src="assets/leave-template-1.png" alt="Leave form template page 1">' +
+                imageTag("assets/leave-template-1.png", "leave-template-1.png", "Leave form template page 1") +
                 '<svg class="leave-sheet-svg" viewBox="0 0 ' + PAGE.width + " " + PAGE.height + '" aria-hidden="true" preserveAspectRatio="none">' +
                     renderCopy(record, startDate, endDate, 0) +
                     renderCopy(record, startDate, endDate, PAGE.officeOffset) +
                 "</svg>" +
             "</div>" +
             '<div class="leave-sheet">' +
-                '<img class="leave-sheet-bg" src="assets/leave-template-2.png" alt="Leave form template page 2">' +
+                imageTag("assets/leave-template-2.png", "leave-template-2.png", "Leave form template page 2") +
                 '<svg class="leave-sheet-svg" viewBox="0 0 ' + PAGE.width + " " + PAGE.height + '" aria-hidden="true" preserveAspectRatio="none">' +
                     renderNotes(record) +
                 "</svg>" +
