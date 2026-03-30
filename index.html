@@ -690,10 +690,12 @@ function submitLeave() {
     if(!start||!end) return showToast('Please select start and end time','error');
     if(new Date(start)>=new Date(end)) return showToast('End time must be after start time','error');
     const student=DB.students().find(s=>s.studentId===sid);
+    const chineseName=student?.chineseName||student?.name||'Unknown';
     const record={
         id:genId(), timestamp:new Date().toISOString(),
         className:cls, studentId:sid,
-        studentName:student?.name||'Unknown',
+        studentName:chineseName,
+        chineseName,
         englishName:student?.englishName||'',
         seatNo:student?.seatNo||'',
         leaveType, reason, startTime:start, endTime:end,

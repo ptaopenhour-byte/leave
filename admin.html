@@ -645,6 +645,7 @@ function importStudents(event) {
                 className:String(row[classKey]||'').trim(),
                 studentId:String(row[idKey]||'').trim(),
                 name:String(row[nameKey]||'').trim(),
+                chineseName:String(row[nameKey]||'').trim(),
                 seatNo:seatKey?String(row[seatKey]||'').trim():'',
                 englishName:engKey?String(row[engKey]||'').trim():''
             })).filter(s=>s.className&&s.studentId&&s.name);
@@ -698,7 +699,7 @@ function addStudentManual() {
     if(!cn||!sid||!nm) return showToast('Please fill in Class, Student ID, and Name','error');
     const students=DB.students();
     if(students.find(s=>s.studentId===sid)) return showToast('This Student ID already exists','error');
-    students.push({className:cn,studentId:sid,name:nm,seatNo:sn,englishName:en});
+    students.push({className:cn,studentId:sid,name:nm,chineseName:nm,seatNo:sn,englishName:en});
     DB.set('students',students);
     loadClassOptions(); renderStudentList();
     ['addClassName','addSeatNo','addStudentId','addStudentName','addStudentEng'].forEach(id=>document.getElementById(id).value='');

@@ -136,6 +136,8 @@
 
     function renderCopy(record, startDate, endDate, offsetY) {
         const studentId = record.studentId || record.seatNo || "";
+        const chineseName = record.chineseName || record.studentName || record.name || "";
+        const englishName = record.englishName || "";
         const fields = PAGE.studentFields;
         const time = PAGE.timeFields;
         const parts = [];
@@ -148,11 +150,11 @@
             size: 10.8,
             width: fields.studentId.width,
         }));
-        parts.push(svgText(record.studentName || "", fields.studentName.x, fields.studentName.y + offsetY, {
+        parts.push(svgText(chineseName, fields.studentName.x, fields.studentName.y + offsetY, {
             size: 11.2,
             width: fields.studentName.width,
         }));
-        parts.push(svgText(record.englishName || "", fields.englishName.x, fields.englishName.y + offsetY, {
+        parts.push(svgText(englishName, fields.englishName.x, fields.englishName.y + offsetY, {
             size: 10.6,
             width: fields.englishName.width,
         }));
@@ -262,7 +264,7 @@
     }
 
     function titleFor(record) {
-        return "Leave Form - " + (record?.studentName || record?.studentId || "Student");
+        return "Leave Form - " + (record?.chineseName || record?.studentName || record?.studentId || "Student");
     }
 
     window.LeaveFormRenderer = {
