@@ -224,6 +224,167 @@ textarea.form-control { resize:vertical; min-height:80px; }
 .success-text { font-size:1.2rem; font-weight:700; color:var(--text); }
 .success-sub { font-size:0.9rem; color:var(--text-2); margin-top:4px; }
 .period-hint { margin-top:8px; font-size:0.82rem; color:var(--text-2); }
+.apple-hero {
+    background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.28), transparent 38%),
+        linear-gradient(135deg, #0f172a, #1d4ed8 52%, #38bdf8);
+    overflow: hidden;
+}
+.hero-kicker {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.18);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+}
+.hero-headline {
+    position: relative;
+    z-index: 1;
+    margin: 18px 0 10px;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    max-width: 10ch;
+}
+.hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 650px;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.82);
+}
+.hero-metrics {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+}
+.hero-metric {
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+}
+.hero-metric strong {
+    display: block;
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+}
+.hero-metric span {
+    display: block;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.78);
+}
+.apple-panel {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+.leave-mode-row {
+    align-items: stretch;
+}
+.toggle-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    min-height: 100%;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    cursor: pointer;
+}
+.toggle-card input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent);
+}
+.toggle-title {
+    display: block;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+}
+.toggle-copy {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    color: var(--text-2);
+}
+.schedule-card {
+    min-height: 100%;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid #dbeafe;
+    background: linear-gradient(180deg, #eff6ff, #ffffff 68%);
+}
+.schedule-title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #1d4ed8;
+    margin-bottom: 12px;
+}
+.schedule-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.schedule-pill {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: white;
+    border: 1px solid #dbeafe;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+}
+.mode-panel {
+    transition: var(--transition);
+}
+.mode-panel.hidden {
+    display: none;
+}
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-reveal].revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.floating-orb {
+    position: absolute;
+    inset: auto -80px -80px auto;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.24), rgba(255,255,255,0));
+    filter: blur(4px);
+    animation: drift 9s ease-in-out infinite;
+}
+@keyframes drift {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-18px, -16px, 0) scale(1.06); }
+}
 .sidebar-link {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:2px; padding:12px 4px; background:transparent; color:#94A3B8;
@@ -404,6 +565,9 @@ textarea.form-control { resize:vertical; min-height:80px; }
     .radio-group { grid-template-columns:1fr; }
     .sidebar-link { padding:8px 2px; font-size:0.55rem; }
     .sidebar-link .s-icon { font-size:1.2rem; }
+    .hero-metrics { grid-template-columns:1fr; }
+    .leave-mode-row { grid-template-columns:1fr; }
+    .toggle-card, .schedule-card { padding:16px; }
     .leave-preview-meta { grid-template-columns:1fr; }
     .leave-preview-actions { flex-direction:column; }
     .leave-preview-shell { padding:10px; }
@@ -476,11 +640,27 @@ textarea.form-control { resize:vertical; min-height:80px; }
 
 <!-- ====== Leave Application ====== -->
 <div class="page" id="page-leave">
-    <div class="card card-hero" style="background:linear-gradient(135deg,#6366F1,#4F46E5); margin-bottom:24px;">
-        <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:4px; position:relative; z-index:1;">&#x1F4CB; Leave Application</h2>
-        <p style="opacity:0.85; font-size:0.9rem; position:relative; z-index:1;">Create a leave record, auto-calculate periods, and generate the school leave form.</p>
+    <div class="card card-hero apple-hero" style="margin-bottom:24px;" data-reveal>
+        <div class="hero-kicker">&#x2728; Refined Front Desk Flow</div>
+        <h2 class="hero-headline">A calmer, smarter leave request experience.</h2>
+        <p class="hero-copy">Apple-inspired motion, a cleaner flow, automatic period counting, and a same-page printable leave form preview for students and staff.</p>
+        <div class="hero-metrics">
+            <div class="hero-metric">
+                <strong>7 periods</strong>
+                <span>Full-day leave is counted automatically for each selected day.</span>
+            </div>
+            <div class="hero-metric">
+                <strong>Smart timing</strong>
+                <span>Period counts follow the school timetable instead of manual input.</span>
+            </div>
+            <div class="hero-metric">
+                <strong>Live preview</strong>
+                <span>The printable leave form appears instantly on the same page.</span>
+            </div>
+        </div>
+        <div class="floating-orb" aria-hidden="true"></div>
     </div>
-    <div class="card" id="leaveFormCard">
+    <div class="card apple-panel" id="leaveFormCard" data-reveal>
         <div class="card-title"><span class="ct-icon ct-purple">&#x270D;&#xFE0F;</span>Leave Details</div>
         <div class="form-row">
             <div class="form-group">
@@ -529,7 +709,39 @@ textarea.form-control { resize:vertical; min-height:80px; }
             <label class="form-label">Notes (Optional)</label>
             <textarea class="form-control" id="leaveReason" placeholder="Add any extra notes if needed..." rows="2"></textarea>
         </div>
-        <div class="form-row">
+        <div class="form-row leave-mode-row">
+            <label class="toggle-card">
+                <input type="checkbox" id="leaveAllDay">
+                <span>
+                    <span class="toggle-title">All Day Leave</span>
+                    <span class="toggle-copy">Skip manual time selection. You will only choose the date range, and the system will count 7 periods for each full day.</span>
+                </span>
+            </label>
+            <div class="schedule-card">
+                <div class="schedule-title">Daily Timetable</div>
+                <div class="schedule-grid">
+                    <span class="schedule-pill">P1 08:10-09:00</span>
+                    <span class="schedule-pill">P2 09:10-10:00</span>
+                    <span class="schedule-pill">P3 10:10-11:00</span>
+                    <span class="schedule-pill">P4 11:10-12:00</span>
+                    <span class="schedule-pill">Lunch 12:00-13:00</span>
+                    <span class="schedule-pill">P5 13:10-14:00</span>
+                    <span class="schedule-pill">P6 14:10-15:00</span>
+                    <span class="schedule-pill">P7 15:20-16:10</span>
+                </div>
+            </div>
+        </div>
+        <div class="form-row mode-panel hidden" id="leaveDateRange">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="leaveStartDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="leaveEndDate">
+            </div>
+        </div>
+        <div class="form-row mode-panel" id="leaveTimeRange">
             <div class="form-group">
                 <label class="form-label">Start</label>
                 <input type="datetime-local" class="form-control" id="leaveStart">
@@ -542,12 +754,12 @@ textarea.form-control { resize:vertical; min-height:80px; }
         <div class="form-group">
             <label class="form-label">Total Periods</label>
             <input type="number" class="form-control" id="leavePeriods" min="1" value="7" style="max-width:160px;" readonly>
-            <div class="period-hint" id="leavePeriodHint">Auto-calculated at 7 periods per day.</div>
+            <div class="period-hint" id="leavePeriodHint">Select a time range and the system will count overlapping periods automatically.</div>
         </div>
         <button class="btn btn-accent btn-block" onclick="submitLeave()">Submit Leave Application</button>
     </div>
     <div class="card" id="leaveSuccessCard" style="display:none;"></div>
-    <div class="card" id="leavePreviewCard" style="display:none;">
+    <div class="card" id="leavePreviewCard" style="display:none;" data-reveal>
         <div class="card-title"><span class="ct-icon ct-purple">&#x1F5A8;</span>Leave Form Preview</div>
         <p class="leave-preview-note">The leave form is now part of this same page. Review it here, then print or save it as PDF when ready.</p>
         <div class="leave-preview-actions">
@@ -571,6 +783,22 @@ textarea.form-control { resize:vertical; min-height:80px; }
 const DB = window.AppDB;
 const Renderer = window.LeaveFormRenderer;
 let activeLeavePreviewId = '';
+const PERIOD_SCHEDULE = [
+    { key: '1', start: '08:10', end: '09:00' },
+    { key: '2', start: '09:10', end: '10:00' },
+    { key: '3', start: '10:10', end: '11:00' },
+    { key: '4', start: '11:10', end: '12:00' },
+    { key: '5', start: '13:10', end: '14:00' },
+    { key: '6', start: '14:10', end: '15:00' },
+    { key: '7', start: '15:20', end: '16:10' },
+].map(period => ({
+    ...period,
+    startMinutes: timeToMinutes(period.start),
+    endMinutes: timeToMinutes(period.end),
+}));
+const FULL_DAY_PERIODS = PERIOD_SCHEDULE.length;
+const FIRST_PERIOD_START = PERIOD_SCHEDULE[0].start;
+const LAST_PERIOD_END = PERIOD_SCHEDULE[PERIOD_SCHEDULE.length - 1].end;
 
 function updateSyncStatus() {
     const el = document.getElementById('syncStatus');
@@ -591,13 +819,159 @@ function updateSyncStatus() {
     el.textContent = 'Storage: Local';
 }
 
+function timeToMinutes(value) {
+    const [hours, minutes] = String(value || '0:0').split(':').map(Number);
+    return (hours * 60) + minutes;
+}
+
+function sameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+}
+
+function minutesSinceMidnight(date) {
+    return (date.getHours() * 60) + date.getMinutes();
+}
+
+function combineDateAndTime(dateValue, timeValue) {
+    return new Date(dateValue + 'T' + timeValue);
+}
+
+function inclusiveDayCount(startDateValue, endDateValue) {
+    const start = new Date(startDateValue + 'T00:00');
+    const end = new Date(endDateValue + 'T00:00');
+    const diff = Math.round((end - start) / 86400000);
+    return diff + 1;
+}
+
+function calculateTimedPeriods(startDate, endDate) {
+    if (!(startDate instanceof Date) || !(endDate instanceof Date)) return 0;
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return 0;
+    if (startDate >= endDate) return 0;
+
+    let total = 0;
+    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const last = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    while (cursor <= last) {
+        const rangeStart = sameDay(startDate, cursor) ? minutesSinceMidnight(startDate) : 0;
+        const rangeEnd = sameDay(endDate, cursor) ? minutesSinceMidnight(endDate) : 24 * 60;
+        PERIOD_SCHEDULE.forEach(period => {
+            if (rangeEnd > period.startMinutes && rangeStart < period.endMinutes) {
+                total += 1;
+            }
+        });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return total;
+}
+
+function calculateAllDayPeriods(startDateValue, endDateValue) {
+    if (!startDateValue || !endDateValue) return 0;
+    if (new Date(startDateValue + 'T00:00') > new Date(endDateValue + 'T00:00')) return 0;
+    return inclusiveDayCount(startDateValue, endDateValue) * FULL_DAY_PERIODS;
+}
+
+function setLeaveModeUI() {
+    const allDay = document.getElementById('leaveAllDay').checked;
+    const timePanel = document.getElementById('leaveTimeRange');
+    const datePanel = document.getElementById('leaveDateRange');
+    timePanel.classList.toggle('hidden', allDay);
+    datePanel.classList.toggle('hidden', !allDay);
+    document.getElementById('leaveStart').disabled = allDay;
+    document.getElementById('leaveEnd').disabled = allDay;
+    document.getElementById('leaveStartDate').disabled = !allDay;
+    document.getElementById('leaveEndDate').disabled = !allDay;
+}
+
+function updateLeavePeriods() {
+    const allDay = document.getElementById('leaveAllDay').checked;
+    const periodsInput = document.getElementById('leavePeriods');
+    const hint = document.getElementById('leavePeriodHint');
+
+    if (allDay) {
+        const startDateValue = document.getElementById('leaveStartDate').value;
+        const endDateValue = document.getElementById('leaveEndDate').value;
+        const periods = calculateAllDayPeriods(startDateValue, endDateValue);
+        periodsInput.value = periods ? String(periods) : '';
+        if (!startDateValue || !endDateValue) {
+            hint.textContent = 'Choose a start date and end date. Each full day counts as 7 periods.';
+            return;
+        }
+        if (!periods) {
+            hint.textContent = 'End date must be the same as or after the start date.';
+            return;
+        }
+        hint.textContent = inclusiveDayCount(startDateValue, endDateValue) + ' full day(s) x 7 periods = ' + periods + ' periods.';
+        return;
+    }
+
+    const startValue = document.getElementById('leaveStart').value;
+    const endValue = document.getElementById('leaveEnd').value;
+    const periods = calculateTimedPeriods(new Date(startValue), new Date(endValue));
+    periodsInput.value = periods ? String(periods) : '';
+    if (!startValue || !endValue) {
+        hint.textContent = 'Select a time range and the system will count overlapping periods automatically.';
+        return;
+    }
+    if (!periods) {
+        hint.textContent = 'This time range does not overlap with the class timetable. Please adjust the leave window.';
+        return;
+    }
+    hint.textContent = periods + ' class period(s) overlap with the selected leave time.';
+}
+
+function bindLeaveFormEvents() {
+    ['leaveStart', 'leaveEnd', 'leaveStartDate', 'leaveEndDate'].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateLeavePeriods);
+    });
+    document.getElementById('leaveAllDay').addEventListener('change', () => {
+        const startValue = document.getElementById('leaveStart').value;
+        const endValue = document.getElementById('leaveEnd').value;
+        if (startValue && !document.getElementById('leaveStartDate').value) {
+            document.getElementById('leaveStartDate').value = startValue.slice(0, 10);
+        }
+        if (endValue && !document.getElementById('leaveEndDate').value) {
+            document.getElementById('leaveEndDate').value = endValue.slice(0, 10);
+        }
+        setLeaveModeUI();
+        updateLeavePeriods();
+    });
+}
+
+function initScrollReveal() {
+    const nodes = [...document.querySelectorAll('[data-reveal]')];
+    if (!nodes.length) return;
+    if (!('IntersectionObserver' in window)) {
+        nodes.forEach(node => node.classList.add('revealed'));
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('revealed');
+            observer.unobserve(entry.target);
+        });
+    }, { threshold: 0.12 });
+    nodes.forEach(node => observer.observe(node));
+}
+
 // ==================== Init ====================
 function init() {
     const now = new Date();
+    const todayValue = toLocalISO(now).slice(0,10);
     document.getElementById('dateDisplay').textContent =
         now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
     document.getElementById('leaveStart').value = toLocalISO(now).slice(0,16);
     document.getElementById('leaveEnd').value = toLocalISO(new Date(now.getTime()+3600000)).slice(0,16);
+    document.getElementById('leaveStartDate').value = todayValue;
+    document.getElementById('leaveEndDate').value = todayValue;
+    bindLeaveFormEvents();
+    setLeaveModeUI();
+    updateLeavePeriods();
+    initScrollReveal();
     loadClassOptions();
 }
 function toLocalISO(d) { return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString(); }
@@ -683,12 +1057,27 @@ function submitLeave() {
     const sid=document.getElementById('leaveStudent').value;
     const leaveType=document.querySelector('input[name="leaveType"]:checked').value;
     const reason=document.getElementById('leaveReason').value.trim();
-    const start=document.getElementById('leaveStart').value;
-    const end=document.getElementById('leaveEnd').value;
-    const periods=document.getElementById('leavePeriods').value;
+    const allDay=document.getElementById('leaveAllDay').checked;
+    const startInput=document.getElementById('leaveStart').value;
+    const endInput=document.getElementById('leaveEnd').value;
+    const startDateInput=document.getElementById('leaveStartDate').value;
+    const endDateInput=document.getElementById('leaveEndDate').value;
+    let start=startInput;
+    let end=endInput;
+    let periods=0;
     if(!cls||!sid) return showToast('Please select a class and student','error');
-    if(!start||!end) return showToast('Please select start and end time','error');
-    if(new Date(start)>=new Date(end)) return showToast('End time must be after start time','error');
+    if(allDay) {
+        if(!startDateInput||!endDateInput) return showToast('Please select start and end dates','error');
+        if(new Date(startDateInput+'T00:00')>new Date(endDateInput+'T00:00')) return showToast('End date must be the same as or after the start date','error');
+        periods=calculateAllDayPeriods(startDateInput,endDateInput);
+        start=startDateInput+'T'+FIRST_PERIOD_START;
+        end=endDateInput+'T'+LAST_PERIOD_END;
+    } else {
+        if(!start||!end) return showToast('Please select start and end time','error');
+        if(new Date(start)>=new Date(end)) return showToast('End time must be after start time','error');
+        periods=calculateTimedPeriods(new Date(start),new Date(end));
+    }
+    if(!periods) return showToast('The selected leave window does not match any class periods','error');
     const student=DB.students().find(s=>s.studentId===sid);
     const chineseName=student?.chineseName||student?.name||'Unknown';
     const record={
@@ -698,8 +1087,14 @@ function submitLeave() {
         chineseName,
         englishName:student?.englishName||'',
         seatNo:student?.seatNo||'',
+        allDay,
         leaveType, reason, startTime:start, endTime:end,
-        periods:parseInt(periods)||1, verifyCode:genVerifyCode()
+        startDate: allDay ? startDateInput : start.slice(0,10),
+        endDate: allDay ? endDateInput : end.slice(0,10),
+        periods:parseInt(periods,10)||1, verifyCode:genVerifyCode(),
+        approved:false,
+        approvedAt:'',
+        approvedBy:''
     };
     const records=DB.leave();
     records.push(record);
@@ -743,6 +1138,7 @@ function viewDoc(id) {
     });
 
     previewCard.style.display = 'block';
+    previewCard.classList.add('revealed');
     activeLeavePreviewId = id;
     updateLeavePreviewMeta(record);
 

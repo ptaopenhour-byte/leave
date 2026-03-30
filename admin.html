@@ -106,6 +106,20 @@ body {
     background:#FEE2E2;
     border-color:#FECACA;
 }
+.hidden { display:none !important; }
+.admin-user-chip {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 14px; border-radius:999px;
+    background:#E0F2FE; color:#0C4A6E; border:1px solid #BAE6FD;
+    font-size:0.82rem; font-weight:700;
+}
+.admin-user-chip strong {
+    font-size:0.76rem; letter-spacing:0.08em; text-transform:uppercase;
+    color:#0369A1;
+}
+.topbar-actions {
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+}
 .main { max-width:1000px; margin:0 auto; padding:24px 32px 60px; }
 .page { display:none; animation: fadeSlide 0.4s ease; }
 .page.active { display:block; }
@@ -260,6 +274,66 @@ tr:hover { background:var(--surface-2); }
     letter-spacing:0.5px; margin-bottom:4px;
 }
 .verification-item span { font-size:0.95rem; color:var(--text); font-weight:600; }
+.auth-gate {
+    background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.24), transparent 40%),
+        linear-gradient(135deg, #0f172a, #1d4ed8 55%, #38bdf8);
+    color:white;
+    border:none;
+    overflow:hidden;
+}
+.auth-gate-copy {
+    position:relative; z-index:1; max-width:660px;
+    color:rgba(255,255,255,0.84); line-height:1.8; font-size:0.95rem;
+}
+.auth-gate-actions {
+    position:relative; z-index:1;
+    display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;
+}
+.auth-gate-note {
+    position:relative; z-index:1; margin-top:16px; font-size:0.84rem;
+    color:rgba(255,255,255,0.74);
+}
+.admin-list {
+    display:grid; gap:10px; margin-top:18px;
+}
+.admin-list-item {
+    display:flex; justify-content:space-between; align-items:center; gap:14px;
+    padding:14px 16px; border-radius:14px; background:var(--surface-2); border:1px solid var(--border);
+}
+.admin-list-meta {
+    display:flex; flex-direction:column; gap:4px;
+}
+.admin-list-meta strong {
+    font-size:0.93rem; color:var(--text);
+}
+.admin-list-meta span {
+    font-size:0.82rem; color:var(--text-2);
+}
+.badge-approved { background:var(--primary-light); color:#065F46; }
+.badge-pending { background:var(--warning-light); color:#92400E; }
+.approve-toggle {
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.82rem; font-weight:700; color:var(--text-2);
+}
+.approve-toggle input {
+    width:18px; height:18px; accent-color:var(--primary);
+}
+.approval-result-card {
+    border:1px solid var(--border); border-radius:16px; padding:18px; background:var(--surface-2);
+}
+.approval-result-card + .approval-result-card {
+    margin-top:12px;
+}
+.approval-result-top {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:14px;
+}
+.approval-result-top strong {
+    display:block; font-size:1rem; color:var(--text);
+}
+.approval-result-top span {
+    display:block; margin-top:4px; font-size:0.84rem; color:var(--text-2);
+}
 .search-input { position:relative; }
 .search-input input {
     width:100%; padding:10px 14px 10px 38px; border:2px solid var(--border);
@@ -285,6 +359,8 @@ tr:hover { background:var(--surface-2); }
     .stats-grid { grid-template-columns:repeat(2,1fr); }
     .form-row, .form-row-3 { grid-template-columns:1fr; }
     .verification-grid { grid-template-columns:1fr; }
+    .topbar-right, .topbar-actions { justify-content:flex-start; }
+    .admin-list-item, .approval-result-top { flex-direction:column; align-items:flex-start; }
     .sidebar-link { padding:8px 2px; font-size:0.55rem; }
     .sidebar-link .s-icon { font-size:1.2rem; }
 }
@@ -324,12 +400,32 @@ tr:hover { background:var(--surface-2); }
             <div class="topbar-sub">IBSH Bilingual Program &mdash; Administration Dashboard</div>
         </div>
         <div class="topbar-right">
-            <div class="topbar-date sync-pill-local" id="syncStatus">Storage: Local</div>
-            <div class="topbar-date" id="dateDisplay"></div>
+            <div class="topbar-actions">
+                <div class="admin-user-chip hidden" id="adminUserChip"></div>
+                <button class="btn btn-ghost btn-sm" id="adminSignInBtn" onclick="signInAdmin()">Google Sign In</button>
+                <button class="btn btn-ghost btn-sm hidden" id="adminSignOutBtn" onclick="signOutAdmin()">Sign Out</button>
+                <div class="topbar-date sync-pill-local" id="syncStatus">Storage: Local</div>
+                <div class="topbar-date" id="dateDisplay"></div>
+            </div>
         </div>
     </div>
 
     <div class="main">
+<div class="card auth-gate" id="adminAccessGate">
+    <h2 style="font-size:1.55rem; font-weight:800; margin-bottom:10px; position:relative; z-index:1;">Google Admin Access</h2>
+    <p class="auth-gate-copy" id="adminGateMessage">
+        Sign in with an approved Google account to manage roster data, review leave slips, and update approval status. The super admin account is <strong>ptaopenhour@ibsh.tw</strong>.
+    </p>
+    <div class="auth-gate-actions">
+        <button class="btn btn-primary" id="gateSignInBtn" onclick="signInAdmin()">Continue with Google</button>
+        <button class="btn btn-ghost hidden" id="gateSignOutBtn" onclick="signOutAdmin()">Sign Out</button>
+    </div>
+    <p class="auth-gate-note" id="adminGateNote">
+        Whitelisted co-admins can sign in after the super admin adds their email in the Admin Access List below.
+    </p>
+</div>
+
+<div id="adminWorkspace" style="display:none;">
 
 <!-- ====== Admin ====== -->
 <div class="page active" id="page-admin">
@@ -379,6 +475,23 @@ tr:hover { background:var(--surface-2); }
         </div>
         <button class="btn btn-primary" onclick="addStudentManual()">Add Student</button>
     </div>
+    <div class="card" id="adminWhitelistCard" style="display:none;">
+        <div class="card-title"><span class="ct-icon ct-green">&#x1F512;</span>Admin Access List</div>
+        <p style="margin-bottom:16px; color:var(--text-2); font-size:0.88rem;">
+            The super admin can whitelist shared administrator Google accounts here. Whitelisted accounts can sign in and use the admin console.
+        </p>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Whitelisted Google Email</label>
+                <input class="form-control" type="email" id="adminWhitelistEmail" placeholder="teacher@ibsh.tw">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn btn-primary" id="addAdminUserBtn" onclick="addAdminUser()">Add Co-Admin</button>
+            </div>
+        </div>
+        <div id="adminWhitelistSummary" style="font-size:0.84rem; color:var(--text-2);"></div>
+        <div class="admin-list" id="adminWhitelistList"></div>
+    </div>
     <div class="card">
         <div class="card-title"><span class="ct-icon ct-red">&#x1F4CB;</span>Today's Late Records
             <span style="margin-left:auto; font-size:0.82rem; color:var(--text-3); font-weight:500;" id="todayLateCount">0</span>
@@ -397,11 +510,25 @@ tr:hover { background:var(--surface-2); }
         </div>
         <div class="table-wrapper" style="max-height:350px; overflow-y:auto;">
             <table>
-                <thead><tr><th>Class</th><th>Seat</th><th>Student ID</th><th>Name</th><th>Type</th><th>Leave Window</th><th>Code</th><th style="width:100px;">Action</th></tr></thead>
+                <thead><tr><th>Class</th><th>Seat</th><th>Student ID</th><th>Name</th><th>Type</th><th>Leave Window</th><th>Status</th><th>Code</th><th style="width:120px;">Action</th></tr></thead>
                 <tbody id="todayLeaveList"></tbody>
             </table>
         </div>
         <div class="empty-state" id="leaveEmptyMsg"><div class="empty-icon">&#x1F4ED;</div><div class="empty-text">No leave records today</div></div>
+    </div>
+    <div class="card">
+        <div class="card-title"><span class="ct-icon ct-purple">&#x2705;</span>Leave Slip Approval</div>
+        <p style="margin-bottom:16px; color:var(--text-2); font-size:0.88rem;">
+            When a student returns a stamped paper leave slip, search by student ID and tick the approval checkbox.
+        </p>
+        <div class="filter-bar">
+            <input type="text" id="approvalStudentIdInput" class="form-control" style="flex:1; min-width:220px;" placeholder="Enter student ID">
+            <button class="btn btn-primary btn-sm" onclick="lookupLeaveByStudentId()">Search Student ID</button>
+        </div>
+        <div id="leaveApprovalSearchResult" class="empty-state">
+            <div class="empty-icon">&#x1F50E;</div>
+            <div class="empty-text">Search a student ID to review leave records and mark them approved.</div>
+        </div>
     </div>
     <div class="card">
         <div class="card-title"><span class="ct-icon ct-yellow">&#x1F510;</span>Leave Code Verification</div>
@@ -546,16 +673,121 @@ tr:hover { background:var(--surface-2); }
     </div>
 </div>
 
+    </div><!-- end workspace -->
     </div><!-- end main -->
 </div><!-- end content -->
 
 <script>
 // ==================== Data Store ====================
 const DB = window.AppDB;
+const SUPER_ADMIN_EMAIL = 'ptaopenhour@ibsh.tw';
+let adminWorkspaceReady = false;
+let adminAuthState = {
+    user: null,
+    email: '',
+    isAuthorized: false,
+    isSuperAdmin: false,
+    whitelist: [],
+};
+let authStateChangeSeq = 0;
+
+function ensureFirebaseApp() {
+    if (!window.firebase || !window.FIREBASE_CONFIG) return null;
+    if (!window.firebase.apps.length) {
+        window.firebase.initializeApp(window.FIREBASE_CONFIG);
+    }
+    return window.firebase.app();
+}
+
+function getFirebaseAuth() {
+    ensureFirebaseApp();
+    return typeof window.firebase?.auth === 'function' ? window.firebase.auth() : null;
+}
+
+function getFirestore() {
+    ensureFirebaseApp();
+    return typeof window.firebase?.firestore === 'function' ? window.firebase.firestore() : null;
+}
+
+function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function isSuperAdminEmail(email) {
+    return normalizeEmail(email) === SUPER_ADMIN_EMAIL;
+}
+
+function renderTopbarDate() {
+    const now = new Date();
+    document.getElementById('dateDisplay').textContent =
+        now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+}
+
+function setGateState(message, note, options = {}) {
+    const {
+        showSignIn = true,
+        showSignOut = false,
+    } = options;
+    document.getElementById('adminGateMessage').innerHTML = message;
+    document.getElementById('adminGateNote').textContent = note;
+    document.getElementById('gateSignInBtn').classList.toggle('hidden', !showSignIn);
+    document.getElementById('gateSignOutBtn').classList.toggle('hidden', !showSignOut);
+    document.getElementById('adminSignInBtn').classList.toggle('hidden', !showSignIn);
+    document.getElementById('adminSignOutBtn').classList.toggle('hidden', !showSignOut);
+}
+
+function setWorkspaceVisible(visible) {
+    document.getElementById('adminAccessGate').style.display = visible ? 'none' : 'block';
+    document.getElementById('adminWorkspace').style.display = visible ? 'block' : 'none';
+}
+
+function renderAdminIdentity() {
+    const chip = document.getElementById('adminUserChip');
+    if (!adminAuthState.email) {
+        chip.classList.add('hidden');
+        chip.textContent = '';
+        return;
+    }
+    chip.innerHTML = '<strong>' + (adminAuthState.isSuperAdmin ? 'Super' : 'Admin') + '</strong> ' + esc(adminAuthState.email);
+    chip.classList.remove('hidden');
+}
+
+function resetAdminAccess(message, note) {
+    adminAuthState = {
+        user: null,
+        email: '',
+        isAuthorized: false,
+        isSuperAdmin: false,
+        whitelist: [],
+    };
+    setWorkspaceVisible(false);
+    renderAdminIdentity();
+    setGateState(message, note, { showSignIn: true, showSignOut: false });
+    document.getElementById('adminWhitelistCard').style.display = 'none';
+    updateSyncStatus();
+}
+
+async function isWhitelistedAdmin(email) {
+    if (!email) return false;
+    if (isSuperAdminEmail(email)) return true;
+    const firestore = getFirestore();
+    if (!firestore) return false;
+    try {
+        const snapshot = await firestore.collection('admin_users').doc(email).get();
+        return snapshot.exists;
+    } catch (error) {
+        return false;
+    }
+}
 
 function updateSyncStatus() {
     const el = document.getElementById('syncStatus');
     if (!el) return;
+    if (!adminAuthState.isAuthorized) {
+        el.className = 'topbar-date sync-pill-local';
+        el.textContent = 'Admin Locked';
+        return;
+    }
     const status = DB.status();
     el.className = 'topbar-date';
     if (status.mode === 'firebase') {
@@ -576,8 +808,7 @@ function updateSyncStatus() {
 let chartRangeDays = 14;
 function init() {
     const now = new Date();
-    document.getElementById('dateDisplay').textContent =
-        now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    renderTopbarDate();
     const today = isoDate(now);
     document.getElementById('checkDate').value = today;
     document.getElementById('historyDateFrom').value = today;
@@ -743,6 +974,7 @@ function renderTodayLeave() {
         '<td>'+esc(r.studentName)+'</td>'+
         '<td><span class="badge '+badgeCls(r.leaveType)+'">'+esc(r.leaveType)+'</span></td>'+
         '<td style="font-size:0.82rem;">'+fmtRange(r.startTime,r.endTime)+'</td>'+
+        '<td>'+approvalBadge(r)+'<div style="margin-top:8px;">'+approvalToggle(r)+'</div></td>'+
         '<td style="font-size:0.78rem; font-family:monospace;">'+esc(r.verifyCode||'')+'</td>'+
         '<td><button class="btn btn-danger btn-sm" onclick="delRec(\'leave\',\''+r.id+'\')">Delete</button></td>'+
     '</tr>').join('');
@@ -752,6 +984,20 @@ function badgeCls(t) {
     if(t==='Mental Health Leave') return 'badge-mental';
     if(t==='Funeral Leave') return 'badge-funeral';
     return 'badge-personal';
+}
+
+function approvalBadge(record) {
+    return record?.approved
+        ? '<span class="badge badge-approved">&#x2713; Approved</span>'
+        : '<span class="badge badge-pending">&#x23F3; Pending</span>';
+}
+
+function approvalToggle(record) {
+    const checked = record?.approved ? ' checked' : '';
+    return '<label class="approve-toggle">' +
+        '<input type="checkbox"' + checked + ' onchange="toggleLeaveApproval(\'' + esc(record.id) + '\', this.checked)">' +
+        '<span>Approved</span>' +
+    '</label>';
 }
 
 // ==================== Leave Code Lookup ====================
@@ -773,9 +1019,293 @@ function lookupLeaveByCode() {
             '<div class="verification-item"><strong>Period</strong><span>'+fmtRange(r.startTime,r.endTime)+'</span></div>'+
             '<div class="verification-item"><strong>Periods</strong><span>'+r.periods+'</span></div>'+
             '<div class="verification-item"><strong>Code</strong><span style="font-family:monospace;">'+esc(r.verifyCode)+'</span></div>'+
+            '<div class="verification-item"><strong>Status</strong><span>'+approvalBadge(r)+'</span></div>'+
+            '<div class="verification-item"><strong>Approval</strong><span>'+approvalToggle(r)+'</span></div>'+
         '</div>'+
     '</div>';
     showToast('Leave record found!','success');
+}
+
+function lookupLeaveByStudentId() {
+    const studentId = document.getElementById('approvalStudentIdInput').value.trim();
+    const container = document.getElementById('leaveApprovalSearchResult');
+    if (!studentId) {
+        showToast('Please enter a student ID','error');
+        return;
+    }
+    const matches = DB.leave()
+        .filter(record => record.studentId === studentId)
+        .sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+    if (!matches.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#x274C;</div><div class="empty-text">No leave records found for student ID: ' + esc(studentId) + '</div></div>';
+        return;
+    }
+    container.innerHTML = matches.slice(0, 12).map(record => (
+        '<div class="approval-result-card">' +
+            '<div class="approval-result-top">' +
+                '<div>' +
+                    '<strong>' + esc(record.studentName || record.studentId) + ' (' + esc(record.studentId) + ')</strong>' +
+                    '<span>' + esc(record.className || '-') + ' &bull; ' + esc(record.leaveType || 'Leave') + ' &bull; ' + fmtRange(record.startTime, record.endTime) + '</span>' +
+                '</div>' +
+                approvalBadge(record) +
+            '</div>' +
+            '<div class="verification-grid" style="margin:0 0 14px;">' +
+                '<div class="verification-item"><strong>Submitted</strong><span>' + fmtDT(record.timestamp) + '</span></div>' +
+                '<div class="verification-item"><strong>Code</strong><span style="font-family:monospace;">' + esc(record.verifyCode || '') + '</span></div>' +
+                '<div class="verification-item"><strong>Periods</strong><span>' + esc(String(record.periods || '')) + '</span></div>' +
+                '<div class="verification-item"><strong>Approved By</strong><span>' + esc(record.approvedBy || 'Not yet approved') + '</span></div>' +
+            '</div>' +
+            approvalToggle(record) +
+        '</div>'
+    )).join('');
+    showToast('Leave records loaded for ' + studentId,'success');
+}
+
+async function toggleLeaveApproval(id, approved) {
+    if (!adminAuthState.isAuthorized) {
+        showToast('Admin access is required','error');
+        return;
+    }
+    const records = DB.leave();
+    const target = records.find(record => record.id === id);
+    if (!target) {
+        showToast('Leave record not found','error');
+        return;
+    }
+    target.approved = approved;
+    target.approvedAt = approved ? new Date().toISOString() : '';
+    target.approvedBy = approved ? adminAuthState.email : '';
+    await DB.set('leave', records);
+    renderTodayLeave();
+    const codeInput = document.getElementById('leaveCodeInput').value.trim();
+    if (codeInput) lookupLeaveByCode();
+    const studentIdInput = document.getElementById('approvalStudentIdInput').value.trim();
+    if (studentIdInput) lookupLeaveByStudentId();
+    if (DB.status().error) {
+        showToast('Approval changed locally, but Firebase sync failed','error');
+        return;
+    }
+    showToast(approved ? 'Leave slip approved' : 'Approval removed', approved ? 'success' : 'info');
+}
+
+function renderAdminWhitelist(list) {
+    const summary = document.getElementById('adminWhitelistSummary');
+    const listEl = document.getElementById('adminWhitelistList');
+    const addBtn = document.getElementById('addAdminUserBtn');
+    const emailInput = document.getElementById('adminWhitelistEmail');
+    if (!adminAuthState.isAuthorized) {
+        document.getElementById('adminWhitelistCard').style.display = 'none';
+        return;
+    }
+    document.getElementById('adminWhitelistCard').style.display = 'block';
+    addBtn.classList.toggle('hidden', !adminAuthState.isSuperAdmin);
+    emailInput.disabled = !adminAuthState.isSuperAdmin;
+    emailInput.placeholder = adminAuthState.isSuperAdmin ? 'teacher@ibsh.tw' : 'Only the super admin can edit this list';
+    summary.textContent = adminAuthState.isSuperAdmin
+        ? 'Super admin can add or remove shared administrators.'
+        : 'Read-only view. Contact the super admin to change the whitelist.';
+
+    const allAdmins = [
+        { email: SUPER_ADMIN_EMAIL, role: 'Super Admin', addedBy: 'System', addedAt: '' },
+        ...list,
+    ];
+
+    listEl.innerHTML = allAdmins.map(item => {
+        const removable = adminAuthState.isSuperAdmin && item.email !== SUPER_ADMIN_EMAIL;
+        return '<div class="admin-list-item">' +
+            '<div class="admin-list-meta">' +
+                '<strong>' + esc(item.email) + '</strong>' +
+                '<span>' + esc(item.role || 'Co-Admin') + (item.addedBy ? ' &bull; Added by ' + esc(item.addedBy) : '') + (item.addedAt ? ' &bull; ' + fmtDT(item.addedAt) : '') + '</span>' +
+            '</div>' +
+            (removable
+                ? '<button class="btn btn-danger btn-sm" onclick="removeAdminUser(\'' + esc(item.email) + '\')">Remove</button>'
+                : '<span class="badge badge-found">' + esc(item.role || 'Super Admin') + '</span>') +
+        '</div>';
+    }).join('');
+}
+
+async function loadAdminWhitelist() {
+    if (!adminAuthState.isAuthorized) {
+        renderAdminWhitelist([]);
+        return;
+    }
+    const firestore = getFirestore();
+    if (!firestore) {
+        renderAdminWhitelist([]);
+        return;
+    }
+    try {
+        const snapshot = await firestore.collection('admin_users').get();
+        const list = [];
+        snapshot.forEach(doc => {
+            const data = doc.data() || {};
+            list.push({
+                email: normalizeEmail(data.email || doc.id),
+                role: data.role || 'Co-Admin',
+                addedBy: data.addedBy || '',
+                addedAt: data.addedAt || '',
+            });
+        });
+        list.sort((a,b) => a.email.localeCompare(b.email));
+        adminAuthState.whitelist = list;
+        renderAdminWhitelist(list);
+    } catch (error) {
+        adminAuthState.whitelist = [];
+        renderAdminWhitelist([]);
+        showToast('Unable to load admin whitelist','error');
+    }
+}
+
+async function addAdminUser() {
+    if (!adminAuthState.isSuperAdmin) {
+        showToast('Only the super admin can add co-admins','error');
+        return;
+    }
+    const emailInput = document.getElementById('adminWhitelistEmail');
+    const email = normalizeEmail(emailInput.value);
+    if (!email || !email.includes('@')) {
+        showToast('Please enter a valid Google email','error');
+        return;
+    }
+    if (email === SUPER_ADMIN_EMAIL) {
+        showToast('This account is already the super admin','info');
+        return;
+    }
+    const firestore = getFirestore();
+    if (!firestore) {
+        showToast('Firestore is not ready','error');
+        return;
+    }
+    try {
+        await firestore.collection('admin_users').doc(email).set({
+            email,
+            role: 'Co-Admin',
+            addedBy: adminAuthState.email,
+            addedAt: new Date().toISOString(),
+        }, { merge: true });
+        emailInput.value = '';
+        await loadAdminWhitelist();
+        showToast('Co-admin added','success');
+    } catch (error) {
+        showToast('Unable to add co-admin','error');
+    }
+}
+
+async function removeAdminUser(email) {
+    if (!adminAuthState.isSuperAdmin) {
+        showToast('Only the super admin can remove co-admins','error');
+        return;
+    }
+    if (!confirm('Remove ' + email + ' from the admin whitelist?')) return;
+    const firestore = getFirestore();
+    if (!firestore) {
+        showToast('Firestore is not ready','error');
+        return;
+    }
+    try {
+        await firestore.collection('admin_users').doc(email).delete();
+        await loadAdminWhitelist();
+        showToast('Co-admin removed','info');
+    } catch (error) {
+        showToast('Unable to remove co-admin','error');
+    }
+}
+
+async function signInAdmin() {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+        showToast('Firebase Auth is not configured yet','error');
+        return;
+    }
+    const provider = new window.firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+        await auth.signInWithPopup(provider);
+    } catch (error) {
+        if (error?.code === 'auth/popup-closed-by-user') return;
+        showToast('Google sign-in failed: ' + (error?.message || 'Unknown error'),'error');
+    }
+}
+
+async function signOutAdmin() {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+    await auth.signOut();
+    showToast('Signed out','info');
+}
+
+async function handleAdminUser(user) {
+    const seq = ++authStateChangeSeq;
+    if (!user) {
+        resetAdminAccess(
+            'Sign in with an approved Google account to manage roster data, review leave slips, and update approval status. The super admin account is <strong>' + esc(SUPER_ADMIN_EMAIL) + '</strong>.',
+            'Whitelisted co-admins can sign in after the super admin adds their email in the Admin Access List below.'
+        );
+        return;
+    }
+
+    const email = normalizeEmail(user.email);
+    adminAuthState.user = user;
+    adminAuthState.email = email;
+    renderAdminIdentity();
+    setGateState(
+        'Checking access for <strong>' + esc(email || 'Unknown account') + '</strong>...',
+        'Validating this Google account against the admin whitelist.',
+        { showSignIn: false, showSignOut: true }
+    );
+
+    if (!email) {
+        setWorkspaceVisible(false);
+        setGateState(
+            'This Google account does not expose an email address, so it cannot be used for admin access.',
+            'Use a standard Google account and try again.',
+            { showSignIn: false, showSignOut: true }
+        );
+        return;
+    }
+
+    const superAdmin = isSuperAdminEmail(email);
+    const authorized = superAdmin || await isWhitelistedAdmin(email);
+    if (seq !== authStateChangeSeq) return;
+
+    adminAuthState.isSuperAdmin = superAdmin;
+    adminAuthState.isAuthorized = authorized;
+    renderAdminIdentity();
+
+    if (!authorized) {
+        setWorkspaceVisible(false);
+        setGateState(
+            'Signed in as <strong>' + esc(email) + '</strong>, but this account is not on the admin whitelist.',
+            'Ask the super admin to add this email, or sign in with the super admin account.',
+            { showSignIn: false, showSignOut: true }
+        );
+        updateSyncStatus();
+        return;
+    }
+
+    setWorkspaceVisible(true);
+    setGateState(
+        'Access granted for <strong>' + esc(email) + '</strong>.',
+        superAdmin ? 'Super admin controls are enabled.' : 'Co-admin access is ready.',
+        { showSignIn: false, showSignOut: true }
+    );
+
+    if (!adminWorkspaceReady) {
+        updateSyncStatus();
+        await DB.init();
+        if (seq !== authStateChangeSeq) return;
+        init();
+        adminWorkspaceReady = true;
+    } else {
+        renderTopbarDate();
+        loadClassOptions();
+        renderTodayLate();
+        renderTodayLeave();
+        renderStudentList();
+    }
+
+    updateSyncStatus();
+    await loadAdminWhitelist();
 }
 
 // ==================== Delete Record ====================
@@ -909,7 +1439,7 @@ function exportCheckResult(){
 function exportAllRecords(){
     const wb=XLSX.utils.book_new();
     const lr=DB.late().map(r=>({'Date/Time':fmtDT(r.timestamp),'Type':'Late','Class':r.className,'Seat':r.seatNo,'Student ID':r.studentId,'Name':r.studentName,'Reason':r.reason}));
-    const lv=DB.leave().map(r=>({'Date/Time':fmtDT(r.timestamp),'Leave Type':r.leaveType,'Class':r.className,'Seat':r.seatNo,'Student ID':r.studentId,'Name':r.studentName,'Reason':r.reason,'Start':fmtDT(r.startTime),'End':fmtDT(r.endTime),'Periods':r.periods}));
+    const lv=DB.leave().map(r=>({'Date/Time':fmtDT(r.timestamp),'Leave Type':r.leaveType,'Class':r.className,'Seat':r.seatNo,'Student ID':r.studentId,'Name':r.studentName,'Reason':r.reason,'Start':fmtDT(r.startTime),'End':fmtDT(r.endTime),'Periods':r.periods,'Approved':r.approved?'Yes':'No','Approved By':r.approvedBy||'','Approved At':fmtDT(r.approvedAt)}));
     if(lr.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lr),'Late Records');
     if(lv.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lv),'Leave Records');
     if(!lr.length&&!lv.length) return showToast('No records to export','error');
@@ -957,10 +1487,30 @@ function showToast(msg,type='info'){
 window.addEventListener('app-db-status', updateSyncStatus);
 
 async function bootstrap() {
-    updateSyncStatus();
-    await DB.init();
-    init();
-    updateSyncStatus();
+    renderTopbarDate();
+    resetAdminAccess(
+        'Sign in with an approved Google account to manage roster data, review leave slips, and update approval status. The super admin account is <strong>' + esc(SUPER_ADMIN_EMAIL) + '</strong>.',
+        'Whitelisted co-admins can sign in after the super admin adds their email in the Admin Access List below.'
+    );
+    const auth = getFirebaseAuth();
+    if (!auth) {
+        setGateState(
+            'Firebase Auth is not configured for this page yet.',
+            'Check firebase-config.js and confirm Google sign-in is enabled in Firebase Authentication.',
+            { showSignIn: false, showSignOut: false }
+        );
+        return;
+    }
+    auth.onAuthStateChanged(user => {
+        handleAdminUser(user).catch(error => {
+            console.error('[Admin] Failed to resolve admin auth state.', error);
+            showToast('Unable to load admin access','error');
+            resetAdminAccess(
+                'Google sign-in is available, but this page could not finish loading your admin permissions.',
+                'Check Firestore rules and the admin whitelist, then refresh the page.'
+            );
+        });
+    });
 }
 
 bootstrap();
